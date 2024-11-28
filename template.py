@@ -521,6 +521,11 @@ class {DEVICE_NAME}_transaction extends uvm_sequence_item;
     function void clear();
         {CLEAR_VAR} 
     endfunction
+    
+    function void copy_output({DEVICE_NAME}_transaction tr)
+        {COPY_OUTPUT}
+    endfunction
+    
 endclass
     ''',
 }

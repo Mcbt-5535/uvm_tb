@@ -1,6 +1,7 @@
+from matplotlib.pylab import f
 from template import *
 
-DEVICE_NAME = "float_dsp"
+DEVICE_NAME = "float32_mac"
 variables_list = [
     {
         "is_clk": "1",
@@ -20,16 +21,23 @@ variables_list = [
     },
     {
         "direction": "input",
-        "name": "en_i",
+        "name": "op_mask_i",
+        "type": "rand bit",
+        "length": 16,
+        "uvm_attr": "UVM_ALL_ON"
+    },
+    {
+        "direction": "input",
+        "name": "const_en_i",
         "type": "bit",
         "length": 1,
         "uvm_attr": "UVM_ALL_ON"
     },
     {
         "direction": "input",
-        "name": "pip_mode_i",
-        "type": "bit",
-        "length": 4,
+        "name": "opmode_i",
+        "type": "rand bit",
+        "length": 2,
         "uvm_attr": "UVM_ALL_ON"
     },
     {
@@ -41,21 +49,21 @@ variables_list = [
     },
     {
         "direction": "input",
-        "name": "operating_mode_i",
-        "type": "rand bit",
-        "length": 2,
-        "uvm_attr": "UVM_ALL_ON"
-    },
-    {
-        "direction": "input",
         "name": "floata_i",
         "type": "rand bit",
-        "length": 32,
+        "length": 512,
         "uvm_attr": "UVM_ALL_ON"
     },
     {
         "direction": "input",
         "name": "floatb_i",
+        "type": "rand bit",
+        "length": 512,
+        "uvm_attr": "UVM_ALL_ON"
+    },
+    {
+        "direction": "input",
+        "name": "constc_i",
         "type": "rand bit",
         "length": 32,
         "uvm_attr": "UVM_ALL_ON"
@@ -64,7 +72,7 @@ variables_list = [
         "direction": "output",
         "name": "floatq_o",
         "type": "bit",
-        "length": 32,
+        "length": 512,
         "uvm_attr": "UVM_ALL_ON"
     },
     {
@@ -124,6 +132,15 @@ for var in variables_list:
             trans_str = f'{var["name"]} <= {{{var["length"]}{{1\'b0}}}};'
     trans_clear_code += f"{trans_str}\n        "
 
+trans_copy_output_code = ""
+for var in variables_list:
+    trans_str = ""
+    if var["direction"] == "output":
+        trans_str = f'{var["name"]} <= tr.{var["name"]};'
+    else:
+        continue
+    trans_copy_output_code += f"{trans_str}\n        "
+
 # driver部分
 drv_init_code = ""
 for var in variables_list:
@@ -154,7 +171,7 @@ for var in variables_list:
 
 clk_var = next((var for var in variables_list if (var.get("is_clk") == "1")), None)
 rstn_var = next((var for var in variables_list if (var.get("is_rstn") == "1")), None)
-delay = f'@(posedge vif.{clk_var["name"]});' if clk_var else "#1ns;"
+delay = f'@(negedge vif.{clk_var["name"]});' if clk_var else "#1ns;"
 
 drv_delay1 = delay
 drv_delay2 = "" if delay == "#1ns;" else delay
@@ -244,7 +261,7 @@ if __name__ == "__main__":
                               f'{DEVICE_NAME}_scoreboard.sv': templates['scoreboard'].format(DEVICE_NAME=DEVICE_NAME),
                               f'{DEVICE_NAME}_sequencer.sv': templates['sequencer'].format(DEVICE_NAME=DEVICE_NAME),
                               f'{DEVICE_NAME}_top.sv': templates['top'].format(DEVICE_NAME=DEVICE_NAME, CLK=top_clk, RST=top_rst, IF_INS=top_if_ins, DUT_INS=top_dut_ins),
-                              f'{DEVICE_NAME}_transaction.sv': templates['transaction'].format(DEVICE_NAME=DEVICE_NAME, VARIABLES=trans_variables_code, UVM_FIELDS=trans_uvm_fields_code, CLEAR_VAR=trans_clear_code),
+                              f'{DEVICE_NAME}_transaction.sv': templates['transaction'].format(DEVICE_NAME=DEVICE_NAME, VARIABLES=trans_variables_code, UVM_FIELDS=trans_uvm_fields_code, CLEAR_VAR=trans_clear_code, COPY_OUTPUT=trans_copy_output_code),
                           })
 
     creator.add_structure(folder_name='testcase', files={f'{DEVICE_NAME}_testcase.sv': templates['testcase'].format(DEVICE_NAME=DEVICE_NAME)})
