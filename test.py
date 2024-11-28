@@ -127,16 +127,16 @@ for var in variables_list:
         continue
     else:
         if var["length"] == 1:
-            trans_str = f'{var["name"]} <= 1\'b0;'
+            trans_str = f'{var["name"]} = 1\'b0;'
         else:
-            trans_str = f'{var["name"]} <= {{{var["length"]}{{1\'b0}}}};'
+            trans_str = f'{var["name"]} = {{{var["length"]}{{1\'b0}}}};'
     trans_clear_code += f"{trans_str}\n        "
 
 trans_copy_output_code = ""
 for var in variables_list:
     trans_str = ""
     if var["direction"] == "output":
-        trans_str = f'{var["name"]} <= tr.{var["name"]};'
+        trans_str = f'{var["name"]} = tr.{var["name"]};'
     else:
         continue
     trans_copy_output_code += f"{trans_str}\n        "

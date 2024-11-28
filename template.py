@@ -88,8 +88,8 @@ class {DEVICE_NAME}_sequence extends uvm_sequence #({DEVICE_NAME}_transaction);
     endtask
     virtual task body();
         {DEVICE_NAME}_transaction tr;
+        tr = new("tr");
         repeat (10) begin
-            tr = new("tr");
             // assert (tr.randomize with {{tr.mode_i == 13'h0000;}});
             tr.randomize();
             `uvm_send(tr)
@@ -301,8 +301,8 @@ class {DEVICE_NAME}_monitor extends uvm_monitor;
     endfunction
 
     virtual task main_phase(uvm_phase phase);
+        tr = new("tr");
         while (1) begin
-            tr = new("tr");
             {DELAY}
             {CODE}
             ap.write(tr);
@@ -522,7 +522,7 @@ class {DEVICE_NAME}_transaction extends uvm_sequence_item;
         {CLEAR_VAR} 
     endfunction
     
-    function void copy_output({DEVICE_NAME}_transaction tr)
+    function void copy_output({DEVICE_NAME}_transaction tr);
         {COPY_OUTPUT}
     endfunction
     
