@@ -333,7 +333,7 @@ class {DEVICE_NAME}_scoreboard extends uvm_scoreboard;
 
     task main_phase(uvm_phase phase);
         {DEVICE_NAME}_transaction ref_tr_i, dut_tr_i, temp_tr, temp_tr1;
-        bit result;
+        int result;
         super.main_phase(phase);
         temp_tr1 = new("temp_tr1");
         fork
@@ -349,16 +349,15 @@ class {DEVICE_NAME}_scoreboard extends uvm_scoreboard;
                 #1ps;
                 if (ref_queue.size() > 0) begin
                     temp_tr = ref_queue.pop_front();
-                    result  = temp_tr.compare(dut_tr_i);
-                    if (result) begin
+                    result  = temp_tr.compare_1(dut_tr_i);
+                    if (result == 0) begin
                         `uvm_info("{DEVICE_NAME}_scb", "Compare pass", UVM_LOW);
                         if (get_report_verbosity_level() >= UVM_LOW) begin
                             dut_tr_i.print();
                             temp_tr.print();
                         end
-
                     end else begin
-                        `uvm_error("{DEVICE_NAME}_scb", "Compare FAILED");
+                        `uvm_error("{DEVICE_NAME}_scb", $sformatf("Compare FAILED!!!!! err:%d", result));
                         $display("dut out:");
                         dut_tr_i.print();
                         $display(" expect:");
@@ -524,6 +523,11 @@ class {DEVICE_NAME}_transaction extends uvm_sequence_item;
     
     function void copy_output({DEVICE_NAME}_transaction tr);
         {COPY_OUTPUT}
+    endfunction
+    
+    function int compare_1({DEVICE_NAME}_transaction compare_tr);
+        {COMPARE_VAR}
+        return 0;
     endfunction
     
 endclass
