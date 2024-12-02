@@ -141,6 +141,18 @@ for var in variables_list:
         continue
     trans_copy_output_code += f"{trans_str}\n        "
 
+trans_copy_input_code = ""
+for var in variables_list:
+    trans_str = ""
+    if (var.get("is_clk") == "1"):
+        continue
+    else:
+        if var["direction"] == "input":
+            trans_str = f'{var["name"]} = tr.{var["name"]};'
+        else:
+            continue
+    trans_copy_input_code += f"{trans_str}\n        "
+
 trans_compare_code = ""
 count = 0
 for var in variables_list:
@@ -285,7 +297,13 @@ if __name__ == "__main__":
                               f'{DEVICE_NAME}_top.sv':
                               templates['top'].format(DEVICE_NAME=DEVICE_NAME, CLK=top_clk, RST=top_rst, IF_INS=top_if_ins, DUT_INS=top_dut_ins),
                               f'{DEVICE_NAME}_transaction.sv':
-                              templates['transaction'].format(DEVICE_NAME=DEVICE_NAME, VARIABLES=trans_variables_code, UVM_FIELDS=trans_uvm_fields_code, CLEAR_VAR=trans_clear_code, COPY_OUTPUT=trans_copy_output_code, COMPARE_VAR=trans_compare_code),
+                              templates['transaction'].format(DEVICE_NAME=DEVICE_NAME,
+                                                              VARIABLES=trans_variables_code,
+                                                              UVM_FIELDS=trans_uvm_fields_code,
+                                                              CLEAR_VAR=trans_clear_code,
+                                                              COPY_INPUT=trans_copy_input_code,
+                                                              COPY_OUTPUT=trans_copy_output_code,
+                                                              COMPARE_VAR=trans_compare_code),
                           })
 
     creator.add_structure(folder_name='testcase', files={f'{DEVICE_NAME}_testcase.sv': templates['testcase'].format(DEVICE_NAME=DEVICE_NAME)})
