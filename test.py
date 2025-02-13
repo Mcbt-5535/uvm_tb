@@ -1,7 +1,8 @@
 from matplotlib.pylab import f
 from template import *
-
+# 设定dut的名称
 DEVICE_NAME = "float32_mac"
+# 根据需求添加输入输出变量
 variables_list = [
     {
         "is_clk": "1",
@@ -214,7 +215,7 @@ for var in variables_list:
     dut_dir_code += f"{dut_str}\n    "
 
 #interface部分
-intf_port_code = f'{clk_var["direction"]} bit {clk_var["name"]},\n'
+intf_port_code = f'{clk_var["direction"]} bit {clk_var["name"]},\n' if clk_var else ""
 intf_port_code += f'    {rstn_var["direction"]} bit {rstn_var["name"]}' if rstn_var else ""
 intf_code = ""
 for var in variables_list:
@@ -235,10 +236,21 @@ mon_delay = delay
 mon_code = "\n            ".join([f'tr.{var["name"]} = vif.{var["name"]};' for var in variables_list if var.get("is_clk") != "1"])
 
 #top部分
-top_clk = f'{clk_var["name"]}_top'
-top_if_ins = f'.{clk_var["name"]} ({clk_var["name"]}_top),'
+
+top_if_ins = f'.{clk_var["name"]} ({clk_var["name"]}_top),' if clk_var else ""
 top_if_ins += f'\n        .{rstn_var["name"]} ({rstn_var["name"]}_top),' if rstn_var else ""
 top_if_ins = top_if_ins[:-1]
+
+if clk_var:
+    top_clk = f'reg {clk_var["name"]};\n'
+    top_clk += f'    initial begin\n'
+    top_clk += f'        {clk_var["name"]} = 0;\n'
+    top_clk += f'        forever begin\n'
+    top_clk += f'            #10 {clk_var["name"]} = ~{clk_var["name"]};\n'
+    top_clk += f'        end\n'
+    top_clk += f'    end\n'
+else:
+    top_clk = ""
 
 if rstn_var:
     top_rst = f'reg {rstn_var["name"]}_top;\n\n'

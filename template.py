@@ -408,15 +408,9 @@ import uvm_pkg::*;
 `include "{DEVICE_NAME}_env.sv"
 `include "{DEVICE_NAME}_testcase.sv"
 module {DEVICE_NAME}_top;
-    reg {CLK};
+
+    {CLK}
     {RST}
-    
-    initial begin
-        {CLK} = 0;
-        forever begin
-            #10 {CLK} = ~{CLK};
-        end
-    end
     
     {DEVICE_NAME}_if u_{DEVICE_NAME}_if (
         {IF_INS}
