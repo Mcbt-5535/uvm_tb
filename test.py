@@ -1,7 +1,8 @@
 from matplotlib.pylab import f
 from template import *
-
+# 设定dut的名称
 DEVICE_NAME = "float32_mac"
+# 根据需求添加输入输出变量
 variables_list = [
     {
         "is_clk": "1",
@@ -141,6 +142,31 @@ for var in variables_list:
         continue
     trans_copy_output_code += f"{trans_str}\n        "
 
+trans_copy_input_code = ""
+for var in variables_list:
+    trans_str = ""
+    if (var.get("is_clk") == "1"):
+        continue
+    else:
+        if var["direction"] == "input":
+            trans_str = f'{var["name"]} = tr.{var["name"]};'
+        else:
+            continue
+    trans_copy_input_code += f"{trans_str}\n        "
+
+trans_compare_code = ""
+count = 0
+for var in variables_list:
+    trans_str = ""
+    if (var.get("is_clk") == "1"):
+        continue
+    else:
+        trans_str += f'if ({var["name"]} !== compare_tr.{var["name"]}) begin\n        '
+        trans_str += f'    return {count};\n        '
+        trans_str += f'end\n        '
+        count = count + 1
+    trans_compare_code += f"{trans_str}"
+
 # driver部分
 drv_init_code = ""
 for var in variables_list:
@@ -189,7 +215,7 @@ for var in variables_list:
     dut_dir_code += f"{dut_str}\n    "
 
 #interface部分
-intf_port_code = f'{clk_var["direction"]} bit {clk_var["name"]},\n'
+intf_port_code = f'{clk_var["direction"]} bit {clk_var["name"]},\n' if clk_var else ""
 intf_port_code += f'    {rstn_var["direction"]} bit {rstn_var["name"]}' if rstn_var else ""
 intf_code = ""
 for var in variables_list:
@@ -210,10 +236,21 @@ mon_delay = delay
 mon_code = "\n            ".join([f'tr.{var["name"]} = vif.{var["name"]};' for var in variables_list if var.get("is_clk") != "1"])
 
 #top部分
-top_clk = f'{clk_var["name"]}_top'
-top_if_ins = f'.{clk_var["name"]} ({clk_var["name"]}_top),'
+
+top_if_ins = f'.{clk_var["name"]} ({clk_var["name"]}_top),' if clk_var else ""
 top_if_ins += f'\n        .{rstn_var["name"]} ({rstn_var["name"]}_top),' if rstn_var else ""
 top_if_ins = top_if_ins[:-1]
+
+if clk_var:
+    top_clk = f'reg {clk_var["name"]};\n'
+    top_clk += f'    initial begin\n'
+    top_clk += f'        {clk_var["name"]} = 0;\n'
+    top_clk += f'        forever begin\n'
+    top_clk += f'            #10 {clk_var["name"]} = ~{clk_var["name"]};\n'
+    top_clk += f'        end\n'
+    top_clk += f'    end\n'
+else:
+    top_clk = ""
 
 if rstn_var:
     top_rst = f'reg {rstn_var["name"]}_top;\n\n'
@@ -251,17 +288,34 @@ if __name__ == "__main__":
 
     creator.add_structure(folder_name='testbench',
                           files={
-                              f'{DEVICE_NAME}_agent.sv': templates['agent'].format(DEVICE_NAME=DEVICE_NAME),
-                              f'{DEVICE_NAME}_driver.sv': templates['driver'].format(DEVICE_NAME=DEVICE_NAME, INIT=drv_init_code, DRV_CODE=drv_code, DRV_DELAY=drv_delay1, DRV_DELAY2=drv_delay2),
-                              f'{DEVICE_NAME}_dut.sv': templates['dut'].format(DEVICE_NAME=DEVICE_NAME, PORT=dut_port_code, DIR=dut_dir_code),
-                              f'{DEVICE_NAME}_env.sv': templates['env'].format(DEVICE_NAME=DEVICE_NAME),
-                              f'{DEVICE_NAME}_interface.sv': templates['interface'].format(DEVICE_NAME=DEVICE_NAME, PORT=intf_port_code, CODE=intf_code),
-                              f'{DEVICE_NAME}_model.sv': templates['model'].format(DEVICE_NAME=DEVICE_NAME, CODE=mdl_code),
-                              f'{DEVICE_NAME}_monitor.sv': templates['monitor'].format(DEVICE_NAME=DEVICE_NAME, DELAY=mon_delay, CODE=mon_code),
-                              f'{DEVICE_NAME}_scoreboard.sv': templates['scoreboard'].format(DEVICE_NAME=DEVICE_NAME),
-                              f'{DEVICE_NAME}_sequencer.sv': templates['sequencer'].format(DEVICE_NAME=DEVICE_NAME),
-                              f'{DEVICE_NAME}_top.sv': templates['top'].format(DEVICE_NAME=DEVICE_NAME, CLK=top_clk, RST=top_rst, IF_INS=top_if_ins, DUT_INS=top_dut_ins),
-                              f'{DEVICE_NAME}_transaction.sv': templates['transaction'].format(DEVICE_NAME=DEVICE_NAME, VARIABLES=trans_variables_code, UVM_FIELDS=trans_uvm_fields_code, CLEAR_VAR=trans_clear_code, COPY_OUTPUT=trans_copy_output_code),
+                              f'{DEVICE_NAME}_agent.sv':
+                              templates['agent'].format(DEVICE_NAME=DEVICE_NAME),
+                              f'{DEVICE_NAME}_driver.sv':
+                              templates['driver'].format(DEVICE_NAME=DEVICE_NAME, INIT=drv_init_code, DRV_CODE=drv_code, DRV_DELAY=drv_delay1, DRV_DELAY2=drv_delay2),
+                              f'{DEVICE_NAME}_dut.sv':
+                              templates['dut'].format(DEVICE_NAME=DEVICE_NAME, PORT=dut_port_code, DIR=dut_dir_code),
+                              f'{DEVICE_NAME}_env.sv':
+                              templates['env'].format(DEVICE_NAME=DEVICE_NAME),
+                              f'{DEVICE_NAME}_interface.sv':
+                              templates['interface'].format(DEVICE_NAME=DEVICE_NAME, PORT=intf_port_code, CODE=intf_code),
+                              f'{DEVICE_NAME}_model.sv':
+                              templates['model'].format(DEVICE_NAME=DEVICE_NAME, CODE=mdl_code),
+                              f'{DEVICE_NAME}_monitor.sv':
+                              templates['monitor'].format(DEVICE_NAME=DEVICE_NAME, DELAY=mon_delay, CODE=mon_code),
+                              f'{DEVICE_NAME}_scoreboard.sv':
+                              templates['scoreboard'].format(DEVICE_NAME=DEVICE_NAME),
+                              f'{DEVICE_NAME}_sequencer.sv':
+                              templates['sequencer'].format(DEVICE_NAME=DEVICE_NAME),
+                              f'{DEVICE_NAME}_top.sv':
+                              templates['top'].format(DEVICE_NAME=DEVICE_NAME, CLK=top_clk, RST=top_rst, IF_INS=top_if_ins, DUT_INS=top_dut_ins),
+                              f'{DEVICE_NAME}_transaction.sv':
+                              templates['transaction'].format(DEVICE_NAME=DEVICE_NAME,
+                                                              VARIABLES=trans_variables_code,
+                                                              UVM_FIELDS=trans_uvm_fields_code,
+                                                              CLEAR_VAR=trans_clear_code,
+                                                              COPY_INPUT=trans_copy_input_code,
+                                                              COPY_OUTPUT=trans_copy_output_code,
+                                                              COMPARE_VAR=trans_compare_code),
                           })
 
     creator.add_structure(folder_name='testcase', files={f'{DEVICE_NAME}_testcase.sv': templates['testcase'].format(DEVICE_NAME=DEVICE_NAME)})

@@ -332,8 +332,8 @@ class {DEVICE_NAME}_scoreboard extends uvm_scoreboard;
     endfunction
 
     task main_phase(uvm_phase phase);
-        {DEVICE_NAME}_transaction ref_tr_i, dut_tr_i, temp_tr, temp_tr1;
-        bit result;
+        {DEVICE_NAME}_transaction ref_tr_i, dut_tr_i, ref_tr, temp_tr1;
+        int result;
         super.main_phase(phase);
         temp_tr1 = new("temp_tr1");
         fork
@@ -348,21 +348,20 @@ class {DEVICE_NAME}_scoreboard extends uvm_scoreboard;
                 //     pass;
                 #1ps;
                 if (ref_queue.size() > 0) begin
-                    temp_tr = ref_queue.pop_front();
-                    result  = temp_tr.compare(dut_tr_i);
-                    if (result) begin
+                    ref_tr = ref_queue.pop_front();
+                    result  = ref_tr.compare_1(dut_tr_i);
+                    if (result == 0) begin
                         `uvm_info("{DEVICE_NAME}_scb", "Compare pass", UVM_LOW);
                         if (get_report_verbosity_level() >= UVM_LOW) begin
                             dut_tr_i.print();
-                            temp_tr.print();
+                            ref_tr.print();
                         end
-
                     end else begin
-                        `uvm_error("{DEVICE_NAME}_scb", "Compare FAILED");
+                        `uvm_error("{DEVICE_NAME}_scb", $sformatf("Compare FAILED!!!!! err:%d", result));
                         $display("dut out:");
                         dut_tr_i.print();
                         $display(" expect:");
-                        temp_tr.print();
+                        ref_tr.print();
                         // `uvm_fatal("compare fail", "compare fail!!!!")
                     end
                 end else begin
@@ -409,15 +408,9 @@ import uvm_pkg::*;
 `include "{DEVICE_NAME}_env.sv"
 `include "{DEVICE_NAME}_testcase.sv"
 module {DEVICE_NAME}_top;
-    reg {CLK};
+
+    {CLK}
     {RST}
-    
-    initial begin
-        {CLK} = 0;
-        forever begin
-            #10 {CLK} = ~{CLK};
-        end
-    end
     
     {DEVICE_NAME}_if u_{DEVICE_NAME}_if (
         {IF_INS}
@@ -522,8 +515,17 @@ class {DEVICE_NAME}_transaction extends uvm_sequence_item;
         {CLEAR_VAR} 
     endfunction
     
+    function void copy_input({DEVICE_NAME}_transaction tr);
+        {COPY_INPUT}
+    endfunction
+    
     function void copy_output({DEVICE_NAME}_transaction tr);
         {COPY_OUTPUT}
+    endfunction
+    
+    function int compare_1({DEVICE_NAME}_transaction compare_tr);
+        {COMPARE_VAR}
+        return 0;
     endfunction
     
 endclass
