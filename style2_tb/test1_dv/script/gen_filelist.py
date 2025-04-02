@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+#20250403
 # -*- coding: utf-8 -*-
 """
 根据目录结构和类继承关系生成文件列表
@@ -7,20 +8,21 @@
 
 import os
 import re
+import argparse
 from collections import defaultdict
 from typing import Dict, List, Tuple, Optional, Union
 
 USE_ABSOLUTE = True  # 是否使用绝对路径
-AGENT_ORDER = ["intf", "transaction", "monitor", "driver", "sequencer", "seqr", "agent"]
+AGENT_ORDER = ["intf", "interface", "transaction", "monitor", "driver", "sequencer", "seqr", "agent"]
 ENV_ORDER = ["model", "scoreboard", "env"]
 
 
 # --------------------- 路径配置 ---------------------
-def get_directory_paths(script_dir: str) -> Dict[str, str]:
+def get_directory_paths(script_dir: str, core_type: str) -> Dict[str, str]:
     """获取各目录绝对路径"""
     base_dir = os.path.abspath(os.path.join(script_dir, ".."))
     return {
-        "design_file": os.path.join(base_dir, "..", "design_file"),
+        "design_file": os.path.join(base_dir, "..", "design_file", f"{core_type}"),
         "testbench": os.path.join(base_dir, "verif", "testbench"),
         "hdl_top": os.path.join(base_dir, "verif", "testbench", "hdl_top"),
         "sequences": os.path.join(base_dir, "verif", "testbench", "sequences"),
@@ -171,7 +173,8 @@ def generate_tc_filelist(dirs: Dict[str, str], use_absolute: bool) -> None:
     # 添加其他.f文件引用
     for section in ["sequences", "vseqs", "tests"]:
         f_path = os.path.join(dirs[section], f"{section}.f")
-        lines.append(f"-f {_format_path(f_path, dirs['filelists'], use_absolute)}")
+        if os.path.exists(f_path):
+            lines.append(f"-f {_format_path(f_path, dirs['filelists'], use_absolute)}")
 
     # 写入总文件
     try:
@@ -200,8 +203,11 @@ def _format_path(path: str, base: str, absolute: bool) -> str:
 
 # --------------------- 主程序 ---------------------
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--core_type", type=str, required=True)
+    args = parser.parse_args()
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    directories = get_directory_paths(script_dir)
+    directories = get_directory_paths(script_dir, args.core_type)
 
     # 生成各子目录.f文件
     for section in ["design_file", "sequences", "tests", "vseqs"]:
