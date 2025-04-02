@@ -278,36 +278,25 @@ top_dut_ins = top_dut_ins[:-1]
 # 使用示例
 if __name__ == "__main__":
 
-    creator = FileStructureCreator(os.path.join(script_dir, f'{DEVICE_NAME}'))
+    creator = FileStructureCreator(os.path.join(script_dir, f'{DEVICE_NAME}', 'verif'))
 
     # 使用模板创建文件结构
     creator.add_structure(
-        folder_name='sequence',
+        folder_name=os.path.join('testbench', 'sequences'),
         files={f'{DEVICE_NAME}_sequence.sv': templates['sequence'].format(DEVICE_NAME=DEVICE_NAME)},
     )
-
-    creator.add_structure(folder_name='testbench',
+    creator.add_structure(folder_name=os.path.join('agent', f'{DEVICE_NAME}_agent'),
                           files={
                               f'{DEVICE_NAME}_agent.sv':
                               templates['agent'].format(DEVICE_NAME=DEVICE_NAME),
                               f'{DEVICE_NAME}_driver.sv':
                               templates['driver'].format(DEVICE_NAME=DEVICE_NAME, INIT=drv_init_code, DRV_CODE=drv_code, DRV_DELAY=drv_delay1, DRV_DELAY2=drv_delay2),
-                              f'{DEVICE_NAME}_dut.sv':
-                              templates['dut'].format(DEVICE_NAME=DEVICE_NAME, PORT=dut_port_code, DIR=dut_dir_code),
-                              f'{DEVICE_NAME}_env.sv':
-                              templates['env'].format(DEVICE_NAME=DEVICE_NAME),
                               f'{DEVICE_NAME}_interface.sv':
                               templates['interface'].format(DEVICE_NAME=DEVICE_NAME, PORT=intf_port_code, CODE=intf_code),
-                              f'{DEVICE_NAME}_model.sv':
-                              templates['model'].format(DEVICE_NAME=DEVICE_NAME, CODE=mdl_code),
                               f'{DEVICE_NAME}_monitor.sv':
                               templates['monitor'].format(DEVICE_NAME=DEVICE_NAME, DELAY=mon_delay, CODE=mon_code),
-                              f'{DEVICE_NAME}_scoreboard.sv':
-                              templates['scoreboard'].format(DEVICE_NAME=DEVICE_NAME),
                               f'{DEVICE_NAME}_sequencer.sv':
                               templates['sequencer'].format(DEVICE_NAME=DEVICE_NAME),
-                              f'{DEVICE_NAME}_top.sv':
-                              templates['top'].format(DEVICE_NAME=DEVICE_NAME, CLK=top_clk, RST=top_rst, IF_INS=top_if_ins, DUT_INS=top_dut_ins),
                               f'{DEVICE_NAME}_transaction.sv':
                               templates['transaction'].format(DEVICE_NAME=DEVICE_NAME,
                                                               VARIABLES=trans_variables_code,
@@ -317,8 +306,19 @@ if __name__ == "__main__":
                                                               COPY_OUTPUT=trans_copy_output_code,
                                                               COMPARE_VAR=trans_compare_code),
                           })
+    creator.add_structure(folder_name=os.path.join('env', f'{DEVICE_NAME}_env'),
+                          files={
+                              f'{DEVICE_NAME}_env.sv': templates['env'].format(DEVICE_NAME=DEVICE_NAME),
+                              f'{DEVICE_NAME}_model.sv': templates['model'].format(DEVICE_NAME=DEVICE_NAME, CODE=mdl_code),
+                              f'{DEVICE_NAME}_scoreboard.sv': templates['scoreboard'].format(DEVICE_NAME=DEVICE_NAME),
+                          })
+    creator.add_structure(folder_name=os.path.join('testbench', 'hdl_top'),
+                          files={
+                              f'{DEVICE_NAME}_dut.sv': templates['dut'].format(DEVICE_NAME=DEVICE_NAME, PORT=dut_port_code, DIR=dut_dir_code),
+                              f'{DEVICE_NAME}_top.sv': templates['top'].format(DEVICE_NAME=DEVICE_NAME, CLK=top_clk, RST=top_rst, IF_INS=top_if_ins, DUT_INS=top_dut_ins),
+                          })
 
-    creator.add_structure(folder_name='testcase', files={f'{DEVICE_NAME}_testcase.sv': templates['testcase'].format(DEVICE_NAME=DEVICE_NAME)})
+    creator.add_structure(folder_name=os.path.join('testbench', 'tests'), files={f'{DEVICE_NAME}_testcase.sv': templates['testcase'].format(DEVICE_NAME=DEVICE_NAME)})
 
     # 创建结构
     creator.create_structure()
