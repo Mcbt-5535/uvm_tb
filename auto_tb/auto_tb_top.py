@@ -1,7 +1,7 @@
-from matplotlib.pylab import f
+# v1.2 2025/04/07
 from template import *
 # 设定dut的名称
-DEVICE_NAME = "float32_mac"
+DEVICE_NAME = "test1"
 # 根据需求添加输入输出变量
 variables_list = [
     {
@@ -22,74 +22,25 @@ variables_list = [
     },
     {
         "direction": "input",
-        "name": "op_mask_i",
+        "name": "en",
         "type": "rand bit",
-        "length": 16,
-        "uvm_attr": "UVM_ALL_ON"
-    },
-    {
-        "direction": "input",
-        "name": "const_en_i",
-        "type": "bit",
         "length": 1,
         "uvm_attr": "UVM_ALL_ON"
     },
     {
         "direction": "input",
-        "name": "opmode_i",
+        "name": "din_i",
         "type": "rand bit",
-        "length": 2,
-        "uvm_attr": "UVM_ALL_ON"
-    },
-    {
-        "direction": "input",
-        "name": "rounding_mode_i",
-        "type": "rand bit",
-        "length": 2,
-        "uvm_attr": "UVM_ALL_ON"
-    },
-    {
-        "direction": "input",
-        "name": "floata_i",
-        "type": "rand bit",
-        "length": 512,
-        "uvm_attr": "UVM_ALL_ON"
-    },
-    {
-        "direction": "input",
-        "name": "floatb_i",
-        "type": "rand bit",
-        "length": 512,
-        "uvm_attr": "UVM_ALL_ON"
-    },
-    {
-        "direction": "input",
-        "name": "constc_i",
-        "type": "rand bit",
-        "length": 32,
+        "length": 8,
         "uvm_attr": "UVM_ALL_ON"
     },
     {
         "direction": "output",
-        "name": "floatq_o",
-        "type": "bit",
-        "length": 512,
+        "name": "dout_o",
+        "type": "rand bit",
+        "length": 8,
         "uvm_attr": "UVM_ALL_ON"
-    },
-    {
-        "direction": "output",
-        "name": "overflow_o",
-        "type": "bit",
-        "length": 2,
-        "uvm_attr": "UVM_ALL_ON"
-    },
-    {
-        "direction": "output",
-        "name": "exception_o",
-        "type": "bit",
-        "length": 1,
-        "uvm_attr": "UVM_ALL_ON"
-    },
+    }
     # 可以继续添加更多变量
 ]
 
@@ -242,11 +193,17 @@ top_if_ins += f'\n        .{rstn_var["name"]} ({rstn_var["name"]}_top),' if rstn
 top_if_ins = top_if_ins[:-1]
 
 if clk_var:
-    top_clk = f'reg {clk_var["name"]};\n'
+    top_clk = f'reg {clk_var["name"]}_top;\n'
+    top_clk += f'    shortreal half_period;\n'
+    top_clk += f'    shortreal clk_freq;\n'
     top_clk += f'    initial begin\n'
-    top_clk += f'        {clk_var["name"]} = 0;\n'
+    top_clk += f'        if ($value$plusargs("CLK_FREQ=%f", clk_freq)) begin\n'
+    top_clk += f'            $display("clk_freq=%f(M)", clk_freq);\n'
+    top_clk += f'        end\n'
+    top_clk += f'        half_period = 500/clk_freq;\n'
+    top_clk += f'        clk_i_top = 0;\n'
     top_clk += f'        forever begin\n'
-    top_clk += f'            #10 {clk_var["name"]} = ~{clk_var["name"]};\n'
+    top_clk += f'            #half_period {clk_var["name"]}_top = ~{clk_var["name"]}_top;\n'
     top_clk += f'        end\n'
     top_clk += f'    end\n'
 else:
@@ -278,7 +235,7 @@ top_dut_ins = top_dut_ins[:-1]
 # 使用示例
 if __name__ == "__main__":
 
-    creator = FileStructureCreator(os.path.join(script_dir, f'{DEVICE_NAME}', 'verif'))
+    creator = FileStructureCreator(os.path.join(script_dir, f'{DEVICE_NAME}_dv', 'verif'))
 
     # 使用模板创建文件结构
     creator.add_structure(
@@ -312,13 +269,19 @@ if __name__ == "__main__":
                               f'{DEVICE_NAME}_model.sv': templates['model'].format(DEVICE_NAME=DEVICE_NAME, CODE=mdl_code),
                               f'{DEVICE_NAME}_scoreboard.sv': templates['scoreboard'].format(DEVICE_NAME=DEVICE_NAME),
                           })
-    creator.add_structure(folder_name=os.path.join('testbench', 'hdl_top'),
-                          files={
-                              f'{DEVICE_NAME}_dut.sv': templates['dut'].format(DEVICE_NAME=DEVICE_NAME, PORT=dut_port_code, DIR=dut_dir_code),
-                              f'{DEVICE_NAME}_top.sv': templates['top'].format(DEVICE_NAME=DEVICE_NAME, CLK=top_clk, RST=top_rst, IF_INS=top_if_ins, DUT_INS=top_dut_ins),
-                          })
-
+    creator.add_structure(
+        folder_name=os.path.join('testbench', 'hdl_top'),
+        files={
+            #   f'{DEVICE_NAME}_dut.sv': templates['dut'].format(DEVICE_NAME=DEVICE_NAME, PORT=dut_port_code, DIR=dut_dir_code),
+            f'testbench.sv': templates['testbench'].format(DEVICE_NAME=DEVICE_NAME, CLK=top_clk, RST=top_rst, IF_INS=top_if_ins, DUT_INS=top_dut_ins),
+        })
+    creator.add_structure(folder_name=os.path.join('..', '..', 'design_file', f'{DEVICE_NAME}_ip'), files={
+        f'{DEVICE_NAME}_dut.v': templates['dut'].format(DEVICE_NAME=DEVICE_NAME, PORT=dut_port_code, DIR=dut_dir_code),
+    })
     creator.add_structure(folder_name=os.path.join('testbench', 'tests'), files={f'{DEVICE_NAME}_testcase.sv': templates['testcase'].format(DEVICE_NAME=DEVICE_NAME)})
 
+    os.makedirs(os.path.join(script_dir, f'{DEVICE_NAME}_dv', 'script'), exist_ok=True)
+    os.makedirs(os.path.join(script_dir, f'{DEVICE_NAME}_dv', 'filelists'), exist_ok=True)
+    # os.makedirs(os.path.join(script_dir, f'design_file'), exist_ok=True)
     # 创建结构
     creator.create_structure()
