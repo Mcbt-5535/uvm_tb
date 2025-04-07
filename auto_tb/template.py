@@ -1,3 +1,4 @@
+# v1.2 2025/04/07
 import os
 
 
@@ -388,26 +389,26 @@ class {DEVICE_NAME}_sequencer extends uvm_sequencer #({DEVICE_NAME}_transaction)
 endclass
 ''',
     #########################################################################
-    ###                                TOP                                ###
+    ###                            TESTBENCH                              ###
     #########################################################################
-    "top":
+    "testbench":
     '''
 `timescale 1ns / 1ps
 `include "uvm_macros.svh"
 
 import uvm_pkg::*;
-`include "{DEVICE_NAME}_transaction.sv"
-`include "{DEVICE_NAME}_driver.sv"
-`include "{DEVICE_NAME}_interface.sv"
-`include "{DEVICE_NAME}_monitor.sv"
-`include "{DEVICE_NAME}_model.sv"
-`include "{DEVICE_NAME}_scoreboard.sv"
-`include "{DEVICE_NAME}_sequence.sv"
-`include "{DEVICE_NAME}_sequencer.sv"
-`include "{DEVICE_NAME}_agent.sv"
-`include "{DEVICE_NAME}_env.sv"
-`include "{DEVICE_NAME}_testcase.sv"
-module {DEVICE_NAME}_top;
+// `include "{DEVICE_NAME}_transaction.sv"
+// `include "{DEVICE_NAME}_driver.sv"
+// `include "{DEVICE_NAME}_interface.sv"
+// `include "{DEVICE_NAME}_monitor.sv"
+// `include "{DEVICE_NAME}_model.sv"
+// `include "{DEVICE_NAME}_scoreboard.sv"
+// `include "{DEVICE_NAME}_sequence.sv"
+// `include "{DEVICE_NAME}_sequencer.sv"
+// `include "{DEVICE_NAME}_agent.sv"
+// `include "{DEVICE_NAME}_env.sv"
+// `include "{DEVICE_NAME}_testcase.sv"
+module testbench;
 
     {CLK}
     {RST}
@@ -436,7 +437,7 @@ module {DEVICE_NAME}_top;
 
     initial begin
         // Dump waves
-        $dumpvars(0, {DEVICE_NAME}_top);
+        $dumpvars(0, testbench);
         $dumpfile("top.vcd");
     end
     

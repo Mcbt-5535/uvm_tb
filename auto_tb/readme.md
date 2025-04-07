@@ -24,6 +24,7 @@
 在脚本中修改`variables_list`变量，定义DUT的接口信号。每个信号需要指定以下属性：
 
 ```python
+
 variables_list = [
     {
         "is_clk": "1",          # 是否为时钟信号(可选)
@@ -31,11 +32,12 @@ variables_list = [
         "direction": "input",   # 信号方向(input/output)
         "name": "signal_name",  # 信号名称
         "type": "bit",          # 信号类型
-        "length": 1,            # 信号位宽(整数或表达式字符串)
+        "length": 1,            # 信号位宽(整数)
         "uvm_attr": "UVM_ALL_ON" # UVM字段属性
     },
     # 更多信号...
 ]
+
 ```
 
 ### 2. 设置DUT名称
@@ -59,29 +61,33 @@ python uvm_tb_generator.py
 脚本将在当前目录下创建以下文件结构：
 
 ```
-your_dut_name/
-└── verif/
-    ├── agent/
-    │   └── your_dut_name_agent/
-    │       ├── your_dut_name_agent.sv
-    │       ├── your_dut_name_driver.sv
-    │       ├── your_dut_name_interface.sv
-    │       ├── your_dut_name_monitor.sv
-    │       ├── your_dut_name_sequencer.sv
-    │       └── your_dut_name_transaction.sv
-    ├── env/
-    │   └── your_dut_name_env/
-    │       ├── your_dut_name_env.sv
-    │       ├── your_dut_name_model.sv
-    │       └── your_dut_name_scoreboard.sv
-    └── testbench/
-        ├── sequences/
-        │   └── your_dut_name_sequence.sv
-        ├── tests/
-        │   └── your_dut_name_testcase.sv
-        └── hdl_top/
-            ├── your_dut_name_dut.sv
-            └── your_dut_name_top.sv
+├─design_file
+│  └─your_dut_name_ip
+│      └── your_dut_name_dut.sv
+└─your_dut_name_dv/
+    ├── filelists/
+    ├── script/
+    └── verif/
+        ├── agent/
+        │   └── your_dut_name_agent/
+        │       ├── your_dut_name_agent.sv
+        │       ├── your_dut_name_driver.sv
+        │       ├── your_dut_name_interface.sv
+        │       ├── your_dut_name_monitor.sv
+        │       ├── your_dut_name_sequencer.sv
+        │       └── your_dut_name_transaction.sv
+        ├── env/
+        │   └── your_dut_name_env/
+        │       ├── your_dut_name_env.sv
+        │       ├── your_dut_name_model.sv
+        │       └── your_dut_name_scoreboard.sv
+        └── testbench/
+            ├── sequences/
+            │   └── your_dut_name_sequence.sv
+            ├── tests/
+            │   └── your_dut_name_testcase.sv
+            └── hdl_top/
+                └── your_dut_name_top.sv
 ```
 
 ## 自定义模板
