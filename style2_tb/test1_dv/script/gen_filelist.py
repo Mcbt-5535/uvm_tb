@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-#20250403
+#20250512
 # -*- coding: utf-8 -*-
 """
 根据目录结构和类继承关系生成文件列表
@@ -15,6 +15,7 @@ from typing import Dict, List, Tuple, Optional, Union
 USE_ABSOLUTE = True  # 是否使用绝对路径
 AGENT_ORDER = ["intf", "interface", "transaction", "monitor", "driver", "sequencer", "seqr", "agent"]
 ENV_ORDER = ["model", "scoreboard", "env"]
+WHITE_LIST = (".v", ".sv")
 
 
 # --------------------- 路径配置 ---------------------
@@ -134,7 +135,7 @@ def generate_f_file(target_dir: str, output_path: str, use_absolute: bool) -> No
     files = []
     for dirpath, dirnames, filenames in os.walk(target_dir):
         for f in filenames:
-            if not f.endswith(".f"):
+            if f.endswith(WHITE_LIST):
                 files.append(os.path.join(dirpath, f))
     # files = [f for f in os.listdir(target_dir) if os.path.isfile(os.path.join(target_dir, f)) and not f.endswith(".f")]
 
@@ -191,7 +192,7 @@ def _collect_files(directory: str) -> List[str]:
     files = []
     for root, _, filenames in os.walk(directory):
         for fn in filenames:
-            if not fn.endswith(".f"):
+            if fn.endswith(WHITE_LIST):
                 files.append(os.path.join(root, fn))
     return files
 
